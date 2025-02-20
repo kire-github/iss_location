@@ -23,7 +23,7 @@ def create_globe_plot():
     globe.update_traces(marker_size=10, line=dict(color='Blue'))
 
     # Create the globe
-    globe.update_geos(projection_type="orthographic")
+    globe.update_geos(projection_type="orthographic", showcountries=True)
     globe.update_layout(margin={"r":100,"t":100,"l":100,"b":100})
 
     return globe
