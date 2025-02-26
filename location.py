@@ -4,14 +4,21 @@ from threading import Timer
 
 FILE = "location.txt"
 timer = 0
+minutes = 10
 size = 0
 
+def set_frequency(new_minutes):
+    global minutes
+    minutes = new_minutes
+
 def create_timer():
-    t = Timer(10 * 60.0, save_location)
+    global timer, minutes
+
+    t = Timer(minutes * 60.0, save_location)
     t.start()
 
-    global timer
     timer = t
+    print(f"Timer started for {minutes} mins")
 
 def cancel_timer():
     global timer
@@ -31,7 +38,7 @@ def fetch_location():
 
     return time, longitude, latitude
 
-def save_location():
+def save_location(start_timer = False):
     try:
         with open(FILE, "a") as f:
             time, lon, lat = fetch_location()
@@ -45,7 +52,8 @@ def save_location():
         print(f'Failed to fetch location or write to file at: {datetime.now().strftime('%m/%d,%H:%M')}')
 
     finally:
-        create_timer()
+        if start_timer:
+            create_timer()
 
 
 def insert_breakpoint():
