@@ -1,28 +1,29 @@
 import plotly.graph_objects as go
 
 def import_location_data():
-    raw = []
     with open("location.txt", "r") as f:
-        raw = f.readlines()
+        raw_lines = f.readlines()
     
     time, lon, lat  = [], [], []
-    temp_t, temp_lon, temp_lat = [], [], []
-    colors, names = [], []
+    colors, line_colors, names = [], [], []
 
-    for line in raw:
-        s_line = line.split(" ")
+    temp_t, temp_lon, temp_lat = [], [], []
+
+    def finalize(line, marker, name):
+        time.append(temp_t)
+        lon.append(temp_lon)
+        lat.append(temp_lat)
+
+        line_colors.append(line)
+        colors.append(marker)
+        names.append(name)
+
+    for line in raw_lines:
+        s_line = line.strip().split(" ")
 
         if line.strip().startswith("x"):
-            time.append(temp_t)
-            lon.append(temp_lon)
-            lat.append(temp_lat)
-
-            colors.append(generate_colors(int(s_line[1]), s_line[2]))
-            names.append(s_line[3])
-
-            temp_t = []
-            temp_lon = []
-            temp_lat = []
+            finalize(s_line[2], generate_colors(int(s_line[1]), s_line[2]), s_line[3])
+            temp_t, temp_lon, temp_lat = [], [], []
 
         else:
             temp_t.append(s_line[0])
@@ -30,16 +31,14 @@ def import_location_data():
             temp_lat.append(float(s_line[2]))
 
     if len(temp_lat) > 0:
-        time.append(temp_t)
-        lon.append(temp_lon)
-        lat.append(temp_lat)
-
-        last = ["Green"]
-        if len(temp_lat) - 2 > 0: last.append("Blue" * (len(temp_lat) - 2))
+        last = []
+        if len(temp_lat) - 2 > 0: last = ["Blue"] * (len(temp_lat) - 2)
+        last.insert(0, "Green")
         if len(temp_lat) != 1: last.append("Red")
-        colors.append(last)
+
+        finalize("Blue", last, "Current")
     
-    return time, lon, lat, colors, names
+    return time, lon, lat, colors, line_colors, names
 
 def generate_colors(num, color):
     colors = []
@@ -49,13 +48,12 @@ def generate_colors(num, color):
 
 def create_globe_plot():
     # Read in location data, and create colors for the markers
-    time, lon, lat, colors, names = import_location_data()
+    time, lon, lat, colors, line_colors, names = import_location_data()
 
     # Add location datapoints
     globe = go.Figure()
     for i in range(len(time)):
-        globe.add_trace(go.Scattergeo(lat=lat[i], lon=lon[i], text=time[i], mode="markers+lines", marker=dict(color=colors[i])))
-    globe.update_traces(marker_size=10, line=dict(color='Blue'))
+        globe.add_trace(go.Scattergeo(lat=lat[i], lon=lon[i], text=time[i], mode="markers+lines", marker=dict(color=colors[i]), name=names[i], line=dict(color=line_colors[i]), marker_size=10))
 
     # Create the globe
     globe.update_geos(projection_type="orthographic", showcountries=True)
